@@ -1,0 +1,45 @@
+package com.javatechie.filter;
+
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import org.springframework.web.filter.GenericFilterBean;
+
+import java.io.IOException;
+
+public class CustomGatewayFilter extends GenericFilterBean {
+
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse resp, FilterChain chain)
+            throws IOException, ServletException {
+
+        HttpServletRequest request = (HttpServletRequest) req;
+        HttpServletResponse response = (HttpServletResponse) resp;
+
+        String proxyForwardedHostHeader = request.getHeader("X-Forwarded-Host");
+//        System.out.println("ip: " + proxyForwardedHostHeader);
+
+        if (proxyForwardedHostHeader == null || !proxyForwardedHostHeader.equals("localhost:8080")) {
+            System.out.println("Unauthorized Access, you should pass through the API gateway");
+//            UnauthorisedException unauthorisedException = new UnauthorisedException("Unauthorized Access",
+//                    "Unauthorized Access, you should pass through the API gateway");
+//            byte[] responseToSend = restResponseBytes(unauthorisedException.getErrorResponse());
+            ((HttpServletResponse) response).addHeader("SC_UNAUTHORIZED", "Provided Information is Invalid");
+//            ((HttpServletResponse) response).setHeader("Content-Type", "application/json");
+            ((HttpServletResponse) response).setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            ((HttpServletResponse) response).sendError(HttpServletResponse.SC_UNAUTHORIZED, "Provided Information is Invalid");
+//            response.getOutputStream().write(responseToSend);
+//            return;
+        }
+        chain.doFilter(request, response);
+    }
+
+//    private byte[] restResponseBytes(ErrorResponse errorResponse) throws IOException {
+//        String serialized = new ObjectMapper().writeValueAsString(errorResponse);
+//        return serialized.getBytes();
+//    }
+}
